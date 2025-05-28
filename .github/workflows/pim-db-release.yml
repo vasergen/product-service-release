@@ -32,6 +32,9 @@ jobs:
           
           echo "Testing connection with current context..."
           kubectl cluster-info
+
+          echo "Print contexts"
+          kubectl config get-contexts
           
           echo "Testing connection with explicit production-cluster context..."
           kubectl --context=production-cluster cluster-info || echo "production-cluster context failed"
