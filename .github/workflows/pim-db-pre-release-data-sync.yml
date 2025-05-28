@@ -56,6 +56,7 @@ jobs:
       - name: Create Kubernetes Job for Product Quotes Sync
         run: |
           export TIMESTAMP=$(date +%s)
+          export JOB_NAME="sync-product-quotes-${TIMESTAMP}"
           export GITHUB_SHA=${{ github.sha }}
           export MONGODB_CONNECTION_STRING_PRODUCTION="${MONGODB_CONNECTION_STRING_PRODUCTION}"
           export MONGODB_PASSWORD_PRODUCTION="${MONGODB_PASSWORD_PRODUCTION}"
@@ -64,12 +65,15 @@ jobs:
           export SYNC_SCRIPT_CONTENT_B64="${SYNC_SCRIPT_CONTENT_B64}"
           export FUNCTIONS_SCRIPT_CONTENT_B64="${FUNCTIONS_SCRIPT_CONTENT_B64}"
           export PROD_PASSIVE_DB="${PROD_PASSIVE_DB}"
+          
+          echo "Creating job with name: $JOB_NAME"
           envsubst < services/product-service/bin/workflows/sync-product-quotes-job.yaml | kubectl apply -f -
+          
+          # Store job name for next step
+          echo "JOB_NAME=${JOB_NAME}" >> $GITHUB_ENV
 
-      # TODO: this job doesn't work !!!!
       - name: Wait for Job completion and get logs
         run: |
-          JOB_NAME=$(kubectl get jobs -l job-name --no-headers -o custom-columns=NAME:.metadata.name | grep sync-product-quotes | head -1)
           echo "Waiting for job $JOB_NAME to complete..."
           
           # Wait for job to complete (timeout after 30 minutes)
@@ -78,7 +82,7 @@ jobs:
           # Get job status
           JOB_STATUS=$(kubectl get job $JOB_NAME -o jsonpath='{.status.conditions[0].type}')
           
-          # Get pod logs
+          # Get pod logs using the job name as selector
           POD_NAME=$(kubectl get pods -l job-name=$JOB_NAME --no-headers -o custom-columns=NAME:.metadata.name | head -1)
           echo "Getting logs from pod $POD_NAME:"
           kubectl logs $POD_NAME
