@@ -22,18 +22,6 @@ spec:
             apt-get update && 
             apt-get install -y mongodb-database-tools git kubectl && 
             
-            
-            # Debug: Check if environment variables are set
-            echo "Checking environment variables..."
-            echo "SYNC_SCRIPT_CONTENT_B64 length: ${#SYNC_SCRIPT_CONTENT_B64}"
-            echo "FUNCTIONS_SCRIPT_CONTENT_B64 length: ${#FUNCTIONS_SCRIPT_CONTENT_B64}"
-            
-            # Check if SYNC_SCRIPT_CONTENT_B64 is empty
-            if [ -z "$SYNC_SCRIPT_CONTENT_B64" ]; then
-                echo "ERROR: SYNC_SCRIPT_CONTENT_B64 is empty or not set!"
-                exit 1
-            fi
-            
             # Create sync-active-product-quotes-to-prod.sh from base64 encoded environment variable
             echo "Creating sync-active-product-quotes-to-prod.sh..."
             if echo "$SYNC_SCRIPT_CONTENT_B64" | base64 -d > sync-active-product-quotes-to-prod.sh; then
@@ -54,12 +42,10 @@ spec:
             fi
 
             chmod +x sync-active-product-quotes-to-prod.sh
-            ls -la
             
-            # Verify file exists before trying to cat it
+            # Verify file exists
             if [ -f "./sync-active-product-quotes-to-prod.sh" ]; then
                 echo "File exists, showing content:"
-                cat ./sync-active-product-quotes-to-prod.sh
             else
                 echo "ERROR: sync-active-product-quotes-to-prod.sh file was not created!"
                 exit 1

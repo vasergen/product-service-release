@@ -15,18 +15,6 @@ STAGE_DB="product-service"
 MONGODB_USER_NAME="product-service"
 COLLECTION_NAME="quoteDefinitions"
 
-# Debug: Print environment variables (mask passwords for security)
-printf "[DEBUG] Environment variables:\n"
-printf "[DEBUG] MONGODB_CONNECTION_STRING_PRODUCTION: %s\n" "${MONGODB_CONNECTION_STRING_PRODUCTION:-"<NOT_SET>"}"
-printf "[DEBUG] MONGODB_PASSWORD_PRODUCTION: %s\n" "${MONGODB_PASSWORD_PRODUCTION:+<SET>}"
-printf "[DEBUG] MONGODB_CONNECTION_STRING_STAGE: %s\n" "${MONGODB_CONNECTION_STRING_STAGE:-"<NOT_SET>"}"
-printf "[DEBUG] MONGODB_PASSWORD_STAGE: %s\n" "${MONGODB_PASSWORD_STAGE:+<SET>}"
-printf "[DEBUG] PROD_PASSIVE_DB: %s\n" "${PROD_PASSIVE_DB:-"<NOT_SET>"}"
-printf "[DEBUG] STAGE_DB: %s\n" "${STAGE_DB:-"<NOT_SET>"}"
-printf "[DEBUG] MONGODB_USER_NAME: %s\n" "${MONGODB_USER_NAME:-"<NOT_SET>"}"
-printf "[DEBUG] COLLECTION_NAME: %s\n" "${COLLECTION_NAME:-"<NOT_SET>"}"
-printf "[DEBUG] ----------------------------------------\n"
-
 verify_required_env_vars \
   "MONGODB_CONNECTION_STRING_PRODUCTION" \
   "MONGODB_PASSWORD_PRODUCTION" \
@@ -36,8 +24,6 @@ verify_required_env_vars \
   "PROD_PASSIVE_DB" \
   "STAGE_DB" \
   "MONGODB_USER_NAME"
-
-
 
 printf "[INFO] Syncing active product quotes to production\n"
 
