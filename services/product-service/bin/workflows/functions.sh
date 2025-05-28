@@ -44,9 +44,6 @@ get_active_db() {
   local DEFAULT_DB="product-service-a"
   local CLUSTER_NAME="production-cluster"
 
-  # Verify kubectl connectivity first
-  verify_kubectl_connection "${CLUSTER_NAME}"
-
   printf "[INFO] Checking current database configuration...\n" >&2
 
   # Check if configmap exists, get current ACTIVE_DB value
