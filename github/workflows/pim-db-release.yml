@@ -1,0 +1,31 @@
+name: 🚀 PIM DB Release 
+run-name: 🚀 PIM DB Release by ${{ github.actor }} 
+
+on:
+  workflow_dispatch:
+  # push:
+
+jobs:
+  # Switch active DB in product-service
+  switch-active-database:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --region eu-central-1 --name production-cluster
+
+      - name: Switch active DB in config map
+        run: services/product-service/bin/workflows/switch-active-db.sh
+
+      - name: Finish
+        run: echo "Active database switched"

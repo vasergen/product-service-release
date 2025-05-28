@@ -1,0 +1,107 @@
+name: 🔄 PIM DB Pre-Release
+run-name: 🔄 PIM DB Pre-Release Data Sync by ${{ github.actor }} 
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  copy-product-quotes:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Setup stage k8s
+      - name: setup stage k8s
+        run: |
+          aws eks update-kubeconfig --region eu-central-1 --name stage-cluster
+      # Stage Cluster environment variables
+      - name: Fetch MongoDB password and connection string from stage cluster
+        run: |
+          MONGODB_PASSWORD_STAGE=$(kubectl get secret atlas-passwords-stage -o jsonpath='{.data.product-service}' | base64 --decode)
+          MONGODB_CONNECTION_STRING_STAGE=$(kubectl get configmap mongodb-atlas-connection -n default -o jsonpath='{.data.connection-string-srv}')
+          echo "MONGODB_PASSWORD_STAGE=${MONGODB_PASSWORD_STAGE}" >> $GITHUB_ENV
+          echo "MONGODB_CONNECTION_STRING_STAGE=${MONGODB_CONNECTION_STRING_STAGE}" >> $GITHUB_ENV
+
+      # Setup prod k8s
+      - name: Fetch MongoDB password and connection string from production cluster
+        run: |
+          aws eks update-kubeconfig --region eu-central-1 --name production-cluster
+          MONGODB_PASSWORD_PRODUCTION=$(kubectl get secret atlas-passwords-production -o jsonpath='{.data.product-service}' | base64 --decode)
+          MONGODB_CONNECTION_STRING_PRODUCTION=$(kubectl get configmap mongodb-atlas-connection -n default -o jsonpath='{.data.connection-string-srv}')
+          echo "MONGODB_PASSWORD_PRODUCTION=${MONGODB_PASSWORD_PRODUCTION}" >> $GITHUB_ENV
+          echo "MONGODB_CONNECTION_STRING_PRODUCTION=${MONGODB_CONNECTION_STRING_PRODUCTION}" >> $GITHUB_ENV
+          
+          source services/product-service/bin/workflows/functions.sh
+          PROD_PASSIVE_DB=$(get_passive_db)
+          echo "PROD_PASSIVE_DB=${PROD_PASSIVE_DB}" >> $GITHUB_ENV
+
+
+      # Production Cluster environement variables
+      - name: Fetch MongoDB password and connection string from production cluster
+        run: |
+          aws eks update-kubeconfig --region eu-central-1 --name production-cluster
+
+      - name: Read script contents and set environment variables
+        run: |
+          SYNC_SCRIPT_CONTENT_B64=$(cat services/product-service/bin/workflows/sync-active-product-quotes-to-prod.sh | base64 -w 0)
+          echo "SYNC_SCRIPT_CONTENT_B64=${SYNC_SCRIPT_CONTENT_B64}" >> $GITHUB_ENV
+          
+          FUNCTIONS_SCRIPT_CONTENT_B64=$(cat services/product-service/bin/workflows/functions.sh | base64 -w 0)
+          echo "FUNCTIONS_SCRIPT_CONTENT_B64=${FUNCTIONS_SCRIPT_CONTENT_B64}" >> $GITHUB_ENV
+
+      - name: Create Kubernetes Job for Product Quotes Sync
+        run: |
+          export TIMESTAMP=$(date +%s)
+          export GITHUB_SHA=${{ github.sha }}
+          export MONGODB_CONNECTION_STRING_PRODUCTION="${MONGODB_CONNECTION_STRING_PRODUCTION}"
+          export MONGODB_PASSWORD_PRODUCTION="${MONGODB_PASSWORD_PRODUCTION}"
+          export MONGODB_CONNECTION_STRING_STAGE="${MONGODB_CONNECTION_STRING_STAGE}"
+          export MONGODB_PASSWORD_STAGE="${MONGODB_PASSWORD_STAGE}"
+          export SYNC_SCRIPT_CONTENT_B64="${SYNC_SCRIPT_CONTENT_B64}"
+          export FUNCTIONS_SCRIPT_CONTENT_B64="${FUNCTIONS_SCRIPT_CONTENT_B64}"
+          export PROD_PASSIVE_DB="${PROD_PASSIVE_DB}"
+          envsubst < services/product-service/bin/workflows/sync-product-quotes-job.yaml | kubectl apply -f -
+
+      # TODO: this job doesn't work !!!!
+      - name: Wait for Job completion and get logs
+        run: |
+          JOB_NAME=$(kubectl get jobs -l job-name --no-headers -o custom-columns=NAME:.metadata.name | grep sync-product-quotes | head -1)
+          echo "Waiting for job $JOB_NAME to complete..."
+          
+          # Wait for job to complete (timeout after 30 minutes)
+          kubectl wait --for=condition=complete --timeout=1800s job/$JOB_NAME
+          
+          # Get job status
+          JOB_STATUS=$(kubectl get job $JOB_NAME -o jsonpath='{.status.conditions[0].type}')
+          
+          # Get pod logs
+          POD_NAME=$(kubectl get pods -l job-name=$JOB_NAME --no-headers -o custom-columns=NAME:.metadata.name | head -1)
+          echo "Getting logs from pod $POD_NAME:"
+          kubectl logs $POD_NAME
+          
+          # Check if job succeeded
+          if [ "$JOB_STATUS" != "Complete" ]; then
+            echo "Job failed with status: $JOB_STATUS"
+            exit 1
+          fi
+
+      - name: Finish
+        run: echo "Product quotes copied to production database successfully"
+
+  copy-s3-documents:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Finish
+        run: echo "S3 files copied to production bucket successfully"

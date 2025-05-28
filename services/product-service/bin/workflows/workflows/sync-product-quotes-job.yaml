@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-product-quotes-${TIMESTAMP}
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 259200
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: sync-quotes
+        image: mongo:6.0
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - |
+            apt-get update && 
+            apt-get install -y wget gnupg curl && 
+            wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - && 
+            echo 'deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse' | tee /etc/apt/sources.list.d/mongodb-org-6.0.list && 
+            apt-get update && 
+            apt-get install -y mongodb-database-tools git kubectl && 
+            
+            
+            # Create sync-active-product-quotes-to-prod.sh from base64 encoded environment variable
+            echo "$SYNC_SCRIPT_CONTENT_B64" | base64 -d > sync-active-product-quotes-to-prod.sh
+            
+            # Create functions.sh from base64 encoded environment variable
+            echo "$FUNCTIONS_SCRIPT_CONTENT_B64" | base64 -d > functions.sh
+
+            chmod +x sync-active-product-quotes-to-prod.sh
+            ls -la
+            
+            cat ./sync-active-product-quotes-to-prod.sh
+
+            ./sync-active-product-quotes-to-prod.sh $MONGODB_CONNECTION_STRING_PRODUCTION $MONGODB_PASSWORD_PRODUCTION $MONGODB_CONNECTION_STRING_STAGE $MONGODB_PASSWORD_STAGE $PROD_PASSIVE_DB
+        env:
+        - name: MONGODB_CONNECTION_STRING_PRODUCTION
+          value: "${MONGODB_CONNECTION_STRING_PRODUCTION}"
+        - name: MONGODB_PASSWORD_PRODUCTION
+          value: "${MONGODB_PASSWORD_PRODUCTION}"
+        - name: MONGODB_CONNECTION_STRING_STAGE
+          value: "${MONGODB_CONNECTION_STRING_STAGE}"
+        - name: MONGODB_PASSWORD_STAGE
+          value: "${MONGODB_PASSWORD_STAGE}"
+        - name: PRODUCTION_CLUSTER_NAME
+          value: "${PRODUCTION_CLUSTER_NAME}"
+        - name: SYNC_SCRIPT_CONTENT_B64
+          value: "${SYNC_SCRIPT_CONTENT_B64}"
+        - name: FUNCTIONS_SCRIPT_CONTENT_B64
+          value: "${FUNCTIONS_SCRIPT_CONTENT_B64}"
+        - name: PROD_PASSIVE_DB
+          value: "${PROD_PASSIVE_DB}"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m" 
