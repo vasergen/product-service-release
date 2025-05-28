@@ -3,7 +3,6 @@ run-name: 🔄 PIM DB Pre-Release Data Sync by ${{ github.actor }}
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   copy-product-quotes:

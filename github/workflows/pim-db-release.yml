@@ -3,7 +3,6 @@ run-name: 🚀 PIM DB Release by ${{ github.actor }}
 
 on:
   workflow_dispatch:
-  # push:
 
 jobs:
   # Switch active DB in product-service
