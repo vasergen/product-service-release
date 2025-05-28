@@ -3,6 +3,7 @@ run-name: 🔄 PIM DB Pre-Release Data Sync by ${{ github.actor }}
 
 on:
   workflow_dispatch:
+    description: 'Synchronizes PIM data before release by copying product quotes from stage to production database and S3 documents to production bucket'
 
 jobs:
   copy-product-quotes:

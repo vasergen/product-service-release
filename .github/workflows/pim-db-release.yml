@@ -3,6 +3,7 @@ run-name: 🚀 PIM DB Release by ${{ github.actor }}
 
 on:
   workflow_dispatch:
+    description: 'Switches the active database in the product-service by updating the Kubernetes config map in the production cluster'
 
 jobs:
   # Switch active DB in product-service
