@@ -13,6 +13,9 @@ DB_A="product-service-a"
 DB_B="product-service-b"
 CLUSTER_NAME="production-cluster"
 
+# Verify kubectl connectivity before proceeding
+verify_kubectl_connection "${CLUSTER_NAME}"
+
 # Check current database configuration
 ACTIVE_DB=$(get_active_db)
 NEXT_DB=$(get_passive_db)

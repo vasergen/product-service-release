@@ -21,7 +21,14 @@ jobs:
 
       - name: Update kubeconfig for EKS
         run: |
+          echo "Updating kubeconfig for production-cluster..."
           aws eks update-kubeconfig --region eu-central-1 --name production-cluster
+          
+          echo "Verifying kubectl context was created..."
+          kubectl config get-contexts
+          
+          echo "Testing connection to production-cluster..."
+          kubectl --context=production-cluster cluster-info
 
       - name: Switch active DB in config map
         run: services/product-service/bin/workflows/switch-active-db.sh
