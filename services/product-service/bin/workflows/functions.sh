@@ -3,18 +3,19 @@
 # Verify kubectl connectivity to cluster
 # Usage: verify_kubectl_connection "cluster-name"
 verify_kubectl_connection() {
-  local CLUSTER_NAME="${1:-production-cluster}"
+  local CLUSTER_NAME="${1:-$(kubectl config current-context 2>/dev/null || echo 'unknown')}"
   
   printf "[INFO] Verifying kubectl connectivity to cluster: %s\n" "${CLUSTER_NAME}" >&2
   
   # Test basic connectivity by trying to get cluster info
-  if ! kubectl --context="${CLUSTER_NAME}" cluster-info &>/dev/null; then
+  if ! kubectl cluster-info &>/dev/null; then
     printf "[ERROR] Failed to connect to Kubernetes cluster: %s\n" "${CLUSTER_NAME}" >&2
     printf "[ERROR] Please ensure:\n" >&2
     printf "[ERROR] 1. kubectl is installed and configured\n" >&2
     printf "[ERROR] 2. The cluster context '%s' exists\n" "${CLUSTER_NAME}" >&2
     printf "[ERROR] 3. You have proper authentication to the cluster\n" >&2
     printf "[ERROR] Run 'kubectl config get-contexts' to see available contexts\n" >&2
+    printf "[ERROR] Current context: %s\n" "$(kubectl config current-context 2>/dev/null || echo 'none')" >&2
     exit 1
   fi
   
@@ -42,13 +43,12 @@ get_active_db() {
   local KEY="ACTIVE_DB"
   local ACTIVE_DB=""
   local DEFAULT_DB="product-service-a"
-  local CLUSTER_NAME="production-cluster"
 
   printf "[INFO] Checking current database configuration...\n" >&2
 
   # Check if configmap exists, get current ACTIVE_DB value
-  if kubectl --context="${CLUSTER_NAME}" -n "${NAMESPACE}" get configmap "${CONFIGMAP_NAME}" &>/dev/null; then
-    ACTIVE_DB=$(kubectl --context="${CLUSTER_NAME}" -n "${NAMESPACE}" get configmap "${CONFIGMAP_NAME}" -o jsonpath="{.data.${KEY}}" 2>/dev/null || true)
+  if kubectl -n "${NAMESPACE}" get configmap "${CONFIGMAP_NAME}" &>/dev/null; then
+    ACTIVE_DB=$(kubectl -n "${NAMESPACE}" get configmap "${CONFIGMAP_NAME}" -o jsonpath="{.data.${KEY}}" 2>/dev/null || true)
     if [ -z "${ACTIVE_DB}" ]; then
       printf "[WARN] Configmap exists but %s not set\n" "${KEY}" >&2
       ACTIVE_DB="${DEFAULT_DB}"

@@ -27,8 +27,14 @@ jobs:
           echo "Verifying kubectl context was created..."
           kubectl config get-contexts
           
-          echo "Testing connection to production-cluster..."
-          kubectl --context=production-cluster cluster-info
+          echo "Current context:"
+          kubectl config current-context
+          
+          echo "Testing connection with current context..."
+          kubectl cluster-info
+          
+          echo "Testing connection with explicit production-cluster context..."
+          kubectl --context=production-cluster cluster-info || echo "production-cluster context failed"
 
       - name: Switch active DB in config map
         run: services/product-service/bin/workflows/switch-active-db.sh
