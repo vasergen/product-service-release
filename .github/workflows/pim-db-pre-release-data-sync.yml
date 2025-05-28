@@ -1,5 +1,6 @@
+# Synchronizes PIM data before release by copying product quotes from stage to production database and S3 documents to production bucket
 name: 🔄 PIM DB Pre-Release
-run-name: 🔄 PIM DB Pre-Release Data Sync by ${{ github.actor }} - Synchronizes PIM data before release by copying product quotes from stage to production database and S3 documents to production bucket
+run-name: 🔄 PIM DB Pre-Release Data Sync by ${{ github.actor }}
 
 on:
   workflow_dispatch:
