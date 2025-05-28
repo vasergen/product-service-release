@@ -68,4 +68,4 @@ mongorestore \
 printf "[INFO] Cleaning up temporary files...\n"
 rm -rf "$TEMP_DIR" 
 
-printf "[SUCCESS] Done! Successfully synced ACTIVE product quotes to production.\n"
+printf "[SUCCESS] Done! Successfully synced ACTIVE product quotes to production to database %s\n" "$PROD_PASSIVE_DB"
