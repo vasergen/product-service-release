@@ -23,16 +23,47 @@ spec:
             apt-get install -y mongodb-database-tools git kubectl && 
             
             
+            # Debug: Check if environment variables are set
+            echo "Checking environment variables..."
+            echo "SYNC_SCRIPT_CONTENT_B64 length: ${#SYNC_SCRIPT_CONTENT_B64}"
+            echo "FUNCTIONS_SCRIPT_CONTENT_B64 length: ${#FUNCTIONS_SCRIPT_CONTENT_B64}"
+            
+            # Check if SYNC_SCRIPT_CONTENT_B64 is empty
+            if [ -z "$SYNC_SCRIPT_CONTENT_B64" ]; then
+                echo "ERROR: SYNC_SCRIPT_CONTENT_B64 is empty or not set!"
+                exit 1
+            fi
+            
             # Create sync-active-product-quotes-to-prod.sh from base64 encoded environment variable
-            echo "$SYNC_SCRIPT_CONTENT_B64" | base64 -d > sync-active-product-quotes-to-prod.sh
+            echo "Creating sync-active-product-quotes-to-prod.sh..."
+            if echo "$SYNC_SCRIPT_CONTENT_B64" | base64 -d > sync-active-product-quotes-to-prod.sh; then
+                echo "Successfully created sync-active-product-quotes-to-prod.sh"
+            else
+                echo "ERROR: Failed to decode SYNC_SCRIPT_CONTENT_B64 or create file"
+                echo "First 100 chars of SYNC_SCRIPT_CONTENT_B64: ${SYNC_SCRIPT_CONTENT_B64:0:100}"
+                exit 1
+            fi
             
             # Create functions.sh from base64 encoded environment variable
-            echo "$FUNCTIONS_SCRIPT_CONTENT_B64" | base64 -d > functions.sh
+            echo "Creating functions.sh..."
+            if echo "$FUNCTIONS_SCRIPT_CONTENT_B64" | base64 -d > functions.sh; then
+                echo "Successfully created functions.sh"
+            else
+                echo "ERROR: Failed to decode FUNCTIONS_SCRIPT_CONTENT_B64 or create file"
+                exit 1
+            fi
 
             chmod +x sync-active-product-quotes-to-prod.sh
             ls -la
             
-            cat ./sync-active-product-quotes-to-prod.sh
+            # Verify file exists before trying to cat it
+            if [ -f "./sync-active-product-quotes-to-prod.sh" ]; then
+                echo "File exists, showing content:"
+                cat ./sync-active-product-quotes-to-prod.sh
+            else
+                echo "ERROR: sync-active-product-quotes-to-prod.sh file was not created!"
+                exit 1
+            fi
 
             ./sync-active-product-quotes-to-prod.sh $MONGODB_CONNECTION_STRING_PRODUCTION $MONGODB_PASSWORD_PRODUCTION $MONGODB_CONNECTION_STRING_STAGE $MONGODB_PASSWORD_STAGE $PROD_PASSIVE_DB
         env:
