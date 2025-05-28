@@ -43,12 +43,6 @@ jobs:
           PROD_PASSIVE_DB=$(get_passive_db)
           echo "PROD_PASSIVE_DB=${PROD_PASSIVE_DB}" >> $GITHUB_ENV
 
-
-      # Production Cluster environement variables
-      - name: Fetch MongoDB password and connection string from production cluster
-        run: |
-          aws eks update-kubeconfig --region eu-central-1 --name production-cluster
-
       - name: Read script contents and set environment variables
         run: |
           SYNC_SCRIPT_CONTENT_B64=$(cat services/product-service/bin/workflows/sync-active-product-quotes-to-prod.sh | base64 -w 0)
