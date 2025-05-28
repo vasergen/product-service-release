@@ -23,6 +23,7 @@ jobs:
       - name: setup stage k8s
         run: |
           aws eks update-kubeconfig --region eu-central-1 --name stage-cluster
+
       # Stage Cluster environment variables
       - name: Fetch MongoDB password and connection string from stage cluster
         run: |
@@ -44,7 +45,7 @@ jobs:
           PROD_PASSIVE_DB=$(get_passive_db)
           echo "PROD_PASSIVE_DB=${PROD_PASSIVE_DB}" >> $GITHUB_ENV
 
-      - name: Read script contents and set environment variables
+      - name: Read script contents into environment variables
         run: |
           SYNC_SCRIPT_CONTENT_B64=$(cat services/product-service/bin/workflows/sync-active-product-quotes-to-prod.sh | base64 -w 0)
           echo "SYNC_SCRIPT_CONTENT_B64=${SYNC_SCRIPT_CONTENT_B64}" >> $GITHUB_ENV
