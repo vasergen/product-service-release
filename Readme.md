@@ -12,7 +12,7 @@ This worflow:
 
 - Start workflow 
 - Connect to K8s
-  - Start K8s job to sync MongoDB data
+  - Start K8s job to sync MongoDB data (the only reason we start k8s job and not doing it directly in Github Runner is that we can not connect to production mongo cluster from outside our cluster, technically we can whitelist github actions ips, but there are a lot of them which makes this process more complicated)
     - Dump active product quotes in MongoDB on stage 
     - Clean up passive production MongoDB DB 
     - Restore dumped stage data into production 
