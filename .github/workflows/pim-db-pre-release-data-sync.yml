@@ -93,5 +93,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Copy S3 objects from stage to production bucket
+        run: |
+          SOURCE_BUCKET="fc24-pimiento-stage"
+          DEST_BUCKET="fc24-pimiento-production"
+          
+          echo "Starting S3 sync from s3://${SOURCE_BUCKET} to s3://${DEST_BUCKET}"
+          echo "This will only copy files that don't exist in the destination bucket"
+          
+          aws s3 sync "s3://${SOURCE_BUCKET}" "s3://${DEST_BUCKET}" \
+            --exclude "*" \
+            --include "*" \
+            --size-only \
+            --no-delete-removed \
+            --cli-read-timeout 0 \
+            --cli-write-timeout 0
+          
+          echo "S3 sync completed successfully"
+
       - name: Finish
         run: echo "S3 files copied to production bucket successfully"
+        
