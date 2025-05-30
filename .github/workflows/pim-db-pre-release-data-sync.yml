@@ -109,12 +109,7 @@ jobs:
           echo "This will only copy files that don't exist in the destination bucket"
           
           aws s3 sync "s3://${SOURCE_BUCKET}" "s3://${DEST_BUCKET}" \
-            --exclude "*" \
-            --include "*" \
-            --size-only \
-            --no-delete-removed \
-            --cli-read-timeout 0 \
-            --cli-write-timeout 0
+            --size-only
           
           echo "S3 sync completed successfully"
 
