@@ -31,7 +31,7 @@ printf "[INFO] Syncing active product quotes to production\n"
 TEMP_DIR=$(mktemp -d)
 printf "[INFO] Using temporary directory: %s\n" "$TEMP_DIR"
 
-MONGODB_HOST_PRODUCTION=$(echo "${MONGODB_CONNECTION_STRING_PRODUCTION#mongodb+srv://}" | cut -d'?' -f1 | cut -d'/' -f1)
+MONGODB_HOST_PRODUCTION=$(echo "${MONGODB_CONNECTION_STRING_PRODUCTION#mongodb+srv://}" | cut -d'?' -f1 | cut -d'/' -f1) # Example: 
 MONGODB_HOST_STAGE=$(echo "${MONGODB_CONNECTION_STRING_STAGE#mongodb+srv://}" | cut -d'?' -f1 | cut -d'/' -f1)
 
 MONGODB_CONNECTION_STRING_STAGE_WITH_AUTH="mongodb+srv://$MONGODB_USER_NAME:$MONGODB_PASSWORD_STAGE@$MONGODB_HOST_STAGE/$STAGE_DB"
@@ -52,7 +52,7 @@ mongosh "$MONGODB_CONNECTION_STRING_PRODUCTION_WITH_AUTH" --eval "
   print('[SUCCESS] Cleared collection: $PROD_PASSIVE_DB.$COLLECTION_NAME');
 "
 
-# Import the filtered data to production
+# Import the filtered stage data to production
 printf "[INFO] Importing ACTIVE product quotes to production database %s\n" "$PROD_PASSIVE_DB"
 mongorestore \
   --uri="$MONGODB_CONNECTION_STRING_PRODUCTION_WITH_AUTH" \

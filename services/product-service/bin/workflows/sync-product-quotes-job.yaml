@@ -4,7 +4,7 @@ metadata:
   name: sync-product-quotes-${TIMESTAMP}
   namespace: default
 spec:
-  ttlSecondsAfterFinished: 259200
+  ttlSecondsAfterFinished: 259200 # 3 days
   template:
     spec:
       restartPolicy: Never
