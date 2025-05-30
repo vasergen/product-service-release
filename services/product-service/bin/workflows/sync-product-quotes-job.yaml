@@ -42,14 +42,6 @@ spec:
             fi
 
             chmod +x sync-active-product-quotes-to-prod.sh
-            
-            # Verify file exists
-            if [ -f "./sync-active-product-quotes-to-prod.sh" ]; then
-                echo "File exists, showing content:"
-            else
-                echo "ERROR: sync-active-product-quotes-to-prod.sh file was not created!"
-                exit 1
-            fi
 
             ./sync-active-product-quotes-to-prod.sh $MONGODB_CONNECTION_STRING_PRODUCTION $MONGODB_PASSWORD_PRODUCTION $MONGODB_CONNECTION_STRING_STAGE $MONGODB_PASSWORD_STAGE $PROD_PASSIVE_DB
         env:
